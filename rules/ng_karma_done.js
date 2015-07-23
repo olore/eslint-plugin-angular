@@ -22,9 +22,11 @@ module.exports = function (context) {
   // if there is a .then or a .catch, it should call a DONE function
   function checkDoneIsDefined(node) {
     var source = context.getSource(node);
-    if (source.indexOf('.then') > -1 || source.indexOf('.catch') > -1) {
+    if (source.indexOf('.then') > -1 ||
+        source.indexOf('.catch') > -1 ||
+        source.indexOf('.finally') > -1) {
       if (!getDoneFnName(node)) {
-        context.report(node, 'Spec contains a then/catch but doesn\'t define a done() function');
+        context.report(node, 'Spec contains a then/catch/finally but doesn\'t define a done() function');
         return true;
       }
     }
@@ -32,13 +34,13 @@ module.exports = function (context) {
   }
 
 
-  var withinCatchOrThen = false;
+  var withinThenOrCatchOrFinally = false;
   var foundDoneFn = false;
   var calledDoneFn = false;
   var doneFnName;
 
   function reset() {
-    withinCatchOrThen = false;
+    withinThenOrCatchOrFinally = false;
     foundDoneFn = false;
     calledDoneFn = false;
     doneFnName = undefined;
@@ -47,12 +49,14 @@ module.exports = function (context) {
   return {
 
     'Identifier': function (node) {
-      if (node.name === 'catch' || node.name === 'then') {
-        withinCatchOrThen = true;
+      if (node.name === 'then' ||
+          node.name === 'catch' ||
+          node.name === 'finally') {
+        withinThenOrCatchOrFinally = true;
 
       } else {
 
-        if (withinCatchOrThen) {
+        if (withinThenOrCatchOrFinally) {
           if (node.name === doneFnName) {
             calledDoneFn = true;
           }

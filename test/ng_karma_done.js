@@ -14,7 +14,16 @@ eslintTester.addRuleTest('rules/ng_karma_done', {
   valid: [
     {
       code: '\
-            it("with catch should reject if passed state does not exist", function (done) { \
+            it("with then", function (done) { \
+              Service.save().then(function () {                                             \
+                done();                                                                     \
+              });                                                                           \
+            });                                                                             \
+          '
+    },
+    {
+      code: '\
+            it("with catch", function (done) { \
               Service.save().catch(function () {                                            \
                 done();                                                                     \
               });                                                                           \
@@ -23,7 +32,16 @@ eslintTester.addRuleTest('rules/ng_karma_done', {
     },
     {
       code: '\
-              it("with catch passes if done function is not named done", function (foo) { \
+            it("with finally", function (done) { \
+              Service.save().finally(function () {                                          \
+                done();                                                                     \
+              });                                                                           \
+            });                                                                             \
+          '
+    },
+    {
+      code: '\
+              it("with catch, done function can have any name", function (foo) { \
                 Service.save().catch(function () {                                        \
                   foo();                                                                  \
                 });                                                                       \
@@ -32,7 +50,7 @@ eslintTester.addRuleTest('rules/ng_karma_done', {
     },
     {
       code: '\
-              it("with then, passes if done function is not named done", function (foo) { \
+              it("with then, done function can have any name", function (foo) { \
                 Service.save().then(function () {                                         \
                   foo();                                                                  \
                 });                                                                       \
@@ -45,23 +63,33 @@ eslintTester.addRuleTest('rules/ng_karma_done', {
   invalid: [
     {
       code: '\
-          it("should fail because there is a catch with no done", function() {      \
-            Service.save().catch(function () {                                      \
-              doSomething();                                                        \
-            });                                                                     \
-          });                                                                       \
-        ',
-      errors: [{message: 'Spec contains a then/catch but doesn\'t define a done() function'}]
-    },
-    {
-      code: '\
-          it("should fail because there is a then with no done", function() {       \
+          it("requires a done function when there is a then", function() {          \
             Service.save("paperwork").then(function () {                            \
               doSomething();                                                        \
             });                                                                     \
           });                                                                       \
         ',
-      errors: [{message: 'Spec contains a then/catch but doesn\'t define a done() function'}]
+      errors: [{message: 'Spec contains a then/catch/finally but doesn\'t define a done() function'}]
+    },
+    {
+      code: '\
+          it("requires a done function when there is a catch", function() {         \
+            Service.save().catch(function () {                                      \
+              doSomething();                                                        \
+            });                                                                     \
+          });                                                                       \
+        ',
+      errors: [{message: 'Spec contains a then/catch/finally but doesn\'t define a done() function'}]
+    },
+    {
+      code: '\
+          it("requires a done function when there is a finally", function() {       \
+            Service.save().finally(function () {                                    \
+              doSomething();                                                        \
+            });                                                                     \
+          });                                                                       \
+        ',
+      errors: [{message: 'Spec contains a then/catch/finally but doesn\'t define a done() function'}]
     //},
     //{
     //  code: '\
