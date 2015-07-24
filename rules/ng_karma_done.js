@@ -18,30 +18,14 @@ module.exports = function (context) {
     }
   }
 
-
-  // if there is a .then or a .catch, it should call a DONE function
-  function checkDoneIsDefined(node) {
-    var source = context.getSource(node);
-    if (source.indexOf('.then') > -1 ||
-        source.indexOf('.catch') > -1 ||
-        source.indexOf('.finally') > -1) {
-      if (!getDoneFnName(node)) {
-        context.report(node, 'Spec contains a then/catch/finally but doesn\'t define a done() function');
-        return true;
-      }
-    }
-    return false;
-  }
-
-
+  var withinIt = false;
   var withinThenOrCatchOrFinally = false;
-  var foundDoneFn = false;
   var calledDoneFn = false;
   var doneFnName;
 
   function reset() {
+    withinIt = false;
     withinThenOrCatchOrFinally = false;
-    foundDoneFn = false;
     calledDoneFn = false;
     doneFnName = undefined;
   }
@@ -53,7 +37,7 @@ module.exports = function (context) {
           node.name === 'catch' ||
           node.name === 'finally') {
         withinThenOrCatchOrFinally = true;
-
+        console.log('IN a then');
       } else {
 
         if (withinThenOrCatchOrFinally) {
@@ -64,18 +48,48 @@ module.exports = function (context) {
       }
     },
 
+    'CallExpression:exit': function (node) {
+      //console.log('CE EXIT', node);
+      if (isIt(node)) {
+        console.log('exiting an it');
+        if (!calledDoneFn) {
+          context.report(node, 'Spec contains a then/catch/finally but doesn\'t execute a done() function');
+        }
+      }
+
+      if (node.callee && node.callee.property) {
+        if (node.callee.property.name === 'then') {
+          console.log('exiting a THEN');
+          withinThenOrCatchOrFinally = false;
+        }
+      }
+
+    },
+
     'CallExpression': function (node) {
       var runningTests = context.getFilename() === '<input>';
 
       if (runningTests || context.getFilename().indexOf('-spec.js') > 0) {
 
         if (isIt(node)) {
+          console.log('entered an it');
           reset();
+          withinIt = true;
           doneFnName = getDoneFnName(node);
 
-          checkDoneIsDefined(node);
-          //TODO: needs a $digest, $apply or flush
+          //TODO: requires a $digest, $apply or flush
+          //TODO: handle then/catch/finally in a beforeEach/afterEach
+          //TODO: add a description in the README file
 
+        } else {
+          if (withinIt && withinThenOrCatchOrFinally) {
+            if (node.callee && node.callee.name) {
+              if (node.callee.name == doneFnName) {
+                console.log('Called done function');
+                calledDoneFn = true;
+              }
+            }
+          }
         }
       }
     }

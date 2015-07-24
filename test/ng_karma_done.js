@@ -69,7 +69,7 @@ eslintTester.addRuleTest('rules/ng_karma_done', {
             });                                                                     \
           });                                                                       \
         ',
-      errors: [{message: 'Spec contains a then/catch/finally but doesn\'t define a done() function'}]
+      errors: [{message: 'Spec contains a then/catch/finally but doesn\'t execute a done() function'}]
     },
     {
       code: '\
@@ -79,7 +79,7 @@ eslintTester.addRuleTest('rules/ng_karma_done', {
             });                                                                     \
           });                                                                       \
         ',
-      errors: [{message: 'Spec contains a then/catch/finally but doesn\'t define a done() function'}]
+      errors: [{message: 'Spec contains a then/catch/finally but doesn\'t execute a done() function'}]
     },
     {
       code: '\
@@ -89,18 +89,19 @@ eslintTester.addRuleTest('rules/ng_karma_done', {
             });                                                                     \
           });                                                                       \
         ',
-      errors: [{message: 'Spec contains a then/catch/finally but doesn\'t define a done() function'}]
-    //},
-    //{
-    //  code: '\
-    //      it("should fail because done is called outside the then", function(done) {       \
-    //        Service.save("paperwork").then(function () {                            \
-    //        });                                                                     \
-    //        done();                                                        \
-    //      });                                                                       \
-    //    ',
-    //  errors: [{message: 'Spec contains a then/catch that doesn\'t call the done callback'}]
-
+      errors: [{message: 'Spec contains a then/catch/finally but doesn\'t execute a done() function'}]
+    },
+    {
+      code: '\
+          it("should fail because done is called outside the then", function(done) {      \
+            Service.foo(); \
+            Service.save("paperwork").then(function () {                                  \
+              somethingThatIsntDone()                                                     \
+            });                                                                           \
+            done();                                                                       \
+          });                                                                             \
+        ',
+      errors: [{message: 'Spec contains a then/catch/finally but doesn\'t execute a done() function'}]
 
     }
   ]
