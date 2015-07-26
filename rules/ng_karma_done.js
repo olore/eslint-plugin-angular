@@ -22,12 +22,14 @@ module.exports = function (context) {
   var withinThenOrCatchOrFinally = false;
   var calledDoneFn = false;
   var doneFnName;
+  var applyOrDigestOrFlushCalled = false;
 
   function reset() {
     withinIt = false;
     withinThenOrCatchOrFinally = false;
     calledDoneFn = false;
     doneFnName = undefined;
+    applyOrDigestOrFlushCalled = false;
   }
 
   return {
@@ -45,6 +47,16 @@ module.exports = function (context) {
             calledDoneFn = true;
           }
         }
+
+        if (node.name === '$apply' ||
+            node.name === '$digest' ||
+            node.name === 'flush') {
+
+          if (calledDoneFn) {
+            console.log(node.name + ' called');
+            applyOrDigestOrFlushCalled = true;
+          }
+        }
       }
     },
 
@@ -54,6 +66,9 @@ module.exports = function (context) {
         console.log('exiting an it');
         if (!calledDoneFn) {
           context.report(node, 'Spec contains a then/catch/finally but doesn\'t execute a done() function');
+        }
+        if (calledDoneFn && !applyOrDigestOrFlushCalled) {
+          context.report(node, 'Spec contains a then/catch/finally but doesn\'t execute $apply(), $digest(), or httpBackend.flush() function');
         }
       }
 
@@ -90,6 +105,16 @@ module.exports = function (context) {
               }
             }
           }
+
+          //if (withinIt && withinThenOrCatchOrFinally && calledDoneFn) {
+            if (node.callee && node.callee.name) {
+              console.log('>>>>', node.callee.name);
+              if (node.callee.name == '$apply') {
+              }
+            }
+          //}
+
+
         }
       }
     }
