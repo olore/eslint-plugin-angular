@@ -10,7 +10,7 @@ var eslint = require('../node_modules/eslint/lib/eslint'),
 //------------------------------------------------------------------------------
 
 var eslintTester = new ESLintTester(eslint);
-eslintTester.addRuleTest('rules/ng_karma_done', {
+eslintTester.addRuleTest('rules/ng_jasmine_done', {
   valid: [
     {
       code: '\
