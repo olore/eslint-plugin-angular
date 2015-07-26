@@ -14,6 +14,13 @@ eslintTester.addRuleTest('rules/ng_jasmine_done', {
   valid: [
     {
       code: '\
+            it("passes if no then/catch/finally", function (done) { \
+              Service.save();\
+            });                                                                             \
+          '
+    },
+    {
+      code: '\
             it("with then", function (done) { \
               Service.save().then(function () {                                             \
                 done();                                                                     \

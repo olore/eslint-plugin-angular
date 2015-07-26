@@ -7,6 +7,7 @@ module.exports = function (context) {
   var calledDoneFn = false;
   var doneFnName;
   var applyOrDigestOrFlushCalled = false;
+  var itContainedThenOrCatchOrFinally = false;
 
   function debug() {
     //console.log(arguments[0]);
@@ -29,6 +30,7 @@ module.exports = function (context) {
 
   function reset() {
     withinIt = false;
+    itContainedThenOrCatchOrFinally = false;
     withinThenOrCatchOrFinally = false;
     calledDoneFn = false;
     doneFnName = undefined;
@@ -42,6 +44,9 @@ module.exports = function (context) {
           node.name === 'catch' ||
           node.name === 'finally') {
         withinThenOrCatchOrFinally = true;
+        if (withinIt) {
+          itContainedThenOrCatchOrFinally = true;
+        }
         debug('IN a then');
       } else {
 
@@ -66,11 +71,14 @@ module.exports = function (context) {
     'CallExpression:exit': function (node) {
       if (isIt(node)) {
         debug('exiting an it');
-        if (!calledDoneFn) {
-          context.report(node, 'Spec contains a then/catch/finally but doesn\'t execute a done() function');
-        }
-        if (calledDoneFn && !applyOrDigestOrFlushCalled) {
-          context.report(node, 'Spec contains a then/catch/finally but doesn\'t execute $apply(), $digest(), or httpBackend.flush() function');
+        if (itContainedThenOrCatchOrFinally) {
+
+          if (!calledDoneFn) {
+            context.report(node, 'Spec contains a then/catch/finally but doesn\'t execute a done() function');
+          }
+          if (calledDoneFn && !applyOrDigestOrFlushCalled) {
+            context.report(node, 'Spec contains a then/catch/finally but doesn\'t execute $apply(), $digest(), or httpBackend.flush() function');
+          }
         }
       }
 
@@ -94,8 +102,13 @@ module.exports = function (context) {
           withinIt = true;
           doneFnName = getDoneFnName(node);
 
+          // lots of false positives until
+          //TODO: support  }).then(done);
+
+          // lots of false positives until
+          //TODO: support a function that eventually calls $apply(), $digest(), flush()
+
           //TODO: handle then/catch/finally in a beforeEach/afterEach
-          //TODO: add a description in the README file
 
         } else {
 

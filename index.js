@@ -17,7 +17,7 @@
                   'ng_foreach': require('./rules/ng_foreach'),
                   'ng_function_type': require('./rules/ng_function_type'),
                   'ng_interval_service': require('./rules/ng_interval_service'),
-                  'ng_jasmin)don': require('./rules/ng_jasmine_done'),
+                  'ng_jasmine_done': require('./rules/ng_jasmine_done'),
                   'ng_json_functions': require('./rules/ng_json_functions'),
                   'ng_module_getter': require('./rules/ng_module_getter'),
                   'ng_module_name': require('./rules/ng_module_name'),
