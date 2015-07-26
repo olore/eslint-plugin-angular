@@ -2,13 +2,22 @@ module.exports = function (context) {
 
   'use strict';
 
+  var withinIt = false;
+  var withinThenOrCatchOrFinally = false;
+  var calledDoneFn = false;
+  var doneFnName;
+  var applyOrDigestOrFlushCalled = false;
+
+  function debug() {
+    //console.log(arguments[0]);
+  }
+
   function isIt(node) {
     return node.callee && node.callee.name === 'it';
   }
 
   function getDoneFnName(node) {
-    if (node.arguments.length === 2) { // 'it' should always have 2 args, 2nd one being the function for the test
-      // TODO: unless people are getting too fancy on me
+    if (node.arguments.length === 2) {
       var fe = node.arguments[1];
       if (fe.type === 'FunctionExpression') {
         if (fe.params && fe.params[0]) {
@@ -17,12 +26,6 @@ module.exports = function (context) {
       }
     }
   }
-
-  var withinIt = false;
-  var withinThenOrCatchOrFinally = false;
-  var calledDoneFn = false;
-  var doneFnName;
-  var applyOrDigestOrFlushCalled = false;
 
   function reset() {
     withinIt = false;
@@ -39,7 +42,7 @@ module.exports = function (context) {
           node.name === 'catch' ||
           node.name === 'finally') {
         withinThenOrCatchOrFinally = true;
-        console.log('IN a then');
+        debug('IN a then');
       } else {
 
         if (withinThenOrCatchOrFinally) {
@@ -53,7 +56,7 @@ module.exports = function (context) {
             node.name === 'flush') {
 
           if (calledDoneFn) {
-            console.log(node.name + ' called');
+            debug(node.name + ' called');
             applyOrDigestOrFlushCalled = true;
           }
         }
@@ -61,9 +64,8 @@ module.exports = function (context) {
     },
 
     'CallExpression:exit': function (node) {
-      //console.log('CE EXIT', node);
       if (isIt(node)) {
-        console.log('exiting an it');
+        debug('exiting an it');
         if (!calledDoneFn) {
           context.report(node, 'Spec contains a then/catch/finally but doesn\'t execute a done() function');
         }
@@ -74,7 +76,7 @@ module.exports = function (context) {
 
       if (node.callee && node.callee.property) {
         if (node.callee.property.name === 'then') {
-          console.log('exiting a THEN');
+          debug('exiting a THEN');
           withinThenOrCatchOrFinally = false;
         }
       }
@@ -87,33 +89,24 @@ module.exports = function (context) {
       if (runningTests || context.getFilename().indexOf('-spec.js') > 0) {
 
         if (isIt(node)) {
-          console.log('entered an it');
+          debug('entered an it');
           reset();
           withinIt = true;
           doneFnName = getDoneFnName(node);
 
-          //TODO: requires a $digest, $apply or flush
           //TODO: handle then/catch/finally in a beforeEach/afterEach
           //TODO: add a description in the README file
 
         } else {
+
           if (withinIt && withinThenOrCatchOrFinally) {
             if (node.callee && node.callee.name) {
-              if (node.callee.name == doneFnName) {
-                console.log('Called done function');
+              if (node.callee.name === doneFnName) {
+                debug('Called done function');
                 calledDoneFn = true;
               }
             }
           }
-
-          //if (withinIt && withinThenOrCatchOrFinally && calledDoneFn) {
-            if (node.callee && node.callee.name) {
-              console.log('>>>>', node.callee.name);
-              if (node.callee.name == '$apply') {
-              }
-            }
-          //}
-
 
         }
       }
